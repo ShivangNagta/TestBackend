@@ -49,6 +49,7 @@ app.post("/api", (req, res, next) => {
 // POST endpoint for fall detection
 app.post("/fallDetection", async (req, res) => {
   const { userId } = req.body; // Assuming you send userId from ESP32
+  console.log("helo");
 
   try {
     // Get the FCM token for the user from Firestore
