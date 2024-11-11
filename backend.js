@@ -1,24 +1,47 @@
-const express = require('express')
-const cors = require('cors')
+const express = require('express');
+const cors = require('cors');
 const port = process.env.PORT || 3000;
 
-const app = express()
+const app = express();
 
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.json({
-        'message' : "successful"
-    })
-})
+app.get('/', (req, res, next) => {
+    try {
+        res.json({
+            'message': "successful"
+        });
+    } catch (error) {
+        next(error); 
+    }
+});
 
-app.post('/api', (req, res) => {
-    const { token } = req.body
-    res.send("Gir gaya")
-    // res.json({
-    //     "message" : "alert has been sent"
-    // })
-})
+app.post('/api', (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (!token) throw new Error("Token is missing");
 
-app.listen(port)
+        //yaha firebase pr check
+        
+        res.json({
+            "message": "Alert has been sent"
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+app.use((error, req, res, next) => {
+    console.error(error.stack);
+    res.status(500).json({
+        error: 'An unexpected error occurred',
+        message: error.message
+    });
+});
+
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
