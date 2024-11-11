@@ -15,9 +15,10 @@ app.get('/', (req, res) => {
 
 app.post('/api', (req, res) => {
     const { token } = req.body
-    res.json({
-        "message" : "alert has been sent"
-    })
+    res.send("Gir gaya")
+    // res.json({
+    //     "message" : "alert has been sent"
+    // })
 })
 
 app.listen(port)
