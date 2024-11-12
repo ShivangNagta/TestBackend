@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const admin = require("firebase-admin");
 const bodyParser = require("body-parser");
+require("dotenv").config();
+
 const port = process.env.PORT || 3000;
 
 const app = express();
@@ -9,23 +11,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Firebase Admin SDK
+// Initialize Firebase Admin SDK using environment variables
 admin.initializeApp({
-  credential: admin.credential.cert(
-    require("./tinkering24-88f4d-firebase-adminsdk-tf8a5-33716c6887.json")
-  ),
-  databaseURL: "https://tinkering24-88f4d-default-rtdb.firebaseio.com",
+  credential: admin.credential.cert({
+    projectId: process.env.PROJECT_ID,
+    privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
+    clientEmail: process.env.CLIENT_EMAIL,
+  }),
+  databaseURL: `https://${process.env.PROJECT_ID}-default-rtdb.firebaseio.com`,
 });
 
 const db = admin.firestore();
-// const app = express();
 app.use(bodyParser.json());
 
 app.get("/", (req, res, next) => {
   try {
-    res.json({
-      message: "successful",
-    });
+    res.json({ message: "successful" });
   } catch (error) {
     next(error);
   }
@@ -36,11 +37,7 @@ app.post("/api", (req, res, next) => {
     const { token } = req.body;
     if (!token) throw new Error("Token is missing");
 
-    //yaha firebase pr check
-
-    res.json({
-      message: "Alert has been sent",
-    });
+    res.json({ message: "Alert has been sent" });
   } catch (error) {
     next(error);
   }
@@ -48,11 +45,10 @@ app.post("/api", (req, res, next) => {
 
 // POST endpoint for fall detection
 app.post("/fallDetection", async (req, res) => {
-  const { userId } = req.body; // Assuming you send userId from ESP32
-  console.log("hello");
+  const { userId } = req.body;
+  console.log(userId);
 
   try {
-    // Get the user data from Realtime Database
     const userRef = admin.database().ref(`/users/${userId}`);
     const userSnapshot = await userRef.once("value");
 
@@ -64,7 +60,6 @@ app.post("/fallDetection", async (req, res) => {
     const fcmToken = userData.preferences.fcmToken;
     console.log("User token:", fcmToken);
 
-    // Send notification if fall is detected
     const message = {
       token: fcmToken,
       notification: {
@@ -80,7 +75,6 @@ app.post("/fallDetection", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
-
 
 app.use((error, req, res, next) => {
   console.error(error.stack);
