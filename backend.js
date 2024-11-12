@@ -14,7 +14,7 @@ admin.initializeApp({
   credential: admin.credential.cert(
     require("./tinkering24-88f4d-firebase-adminsdk-tf8a5-33716c6887.json")
   ),
-  databaseURL: "https://your-project-id.firebaseio.com",
+  databaseURL: "https://tinkering24-88f4d-default-rtdb.firebaseio.com",
 });
 
 const db = admin.firestore();
@@ -49,25 +49,27 @@ app.post("/api", (req, res, next) => {
 // POST endpoint for fall detection
 app.post("/fallDetection", async (req, res) => {
   const { userId } = req.body; // Assuming you send userId from ESP32
-  console.log("helo");
+  console.log("hello");
 
   try {
-    // Get the FCM token for the user from Firestore
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (!userDoc.exists) {
+    // Get the user data from Realtime Database
+    const userRef = admin.database().ref(`/users/${userId}`);
+    const userSnapshot = await userRef.once("value");
+
+    if (!userSnapshot.exists()) {
       return res.status(404).send("User not found");
     }
 
-    const userData = userDoc.data();
-    const fcmToken = userData.fcmToken;
-    console.log("usertoken", fcmToken);
+    const userData = userSnapshot.val();
+    const fcmToken = userData.preferences.fcmToken;
+    console.log("User token:", fcmToken);
 
     // Send notification if fall is detected
     const message = {
       token: fcmToken,
       notification: {
         title: "Fall Detected",
-        body: "A fall has been detected. Please check on the user.",
+        body: "A fall has been detected. Please check on the user. Location: 30°58'03.5\"N 76°28'02.4\"E",
       },
     };
 
@@ -78,6 +80,7 @@ app.post("/fallDetection", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
+
 
 app.use((error, req, res, next) => {
   console.error(error.stack);
